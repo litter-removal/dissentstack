@@ -44,7 +44,7 @@ services:
             - "6379:6379"
         networks:
             - net
-    web:
+    teddit:
         build: teddit/
         environment:
             - REDIS_HOST=redis
@@ -168,6 +168,17 @@ services:
             - net
         depends_on:
             - redis-alpine
+
+    searx:
+        build:
+            context: Searx/
+            dockerfile: Dockerfile
+        environment:
+            VIRTUAL_HOST: searx.dissent.com
+        ports:
+            - 8083:8080
+        networks:
+            - net
 
     
 volumes:
