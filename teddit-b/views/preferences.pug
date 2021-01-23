@@ -1,0 +1,37 @@
+doctype html
+html
+  head
+    title preferences - teddit
+    include includes/head.pug
+  body(class=""+ user_preferences.theme +"")
+    include includes/topbar.pug
+    .container
+      .content
+        h1 Preferences
+        form(action="/saveprefs", method="POST")
+          legend Display
+          .setting
+            label(for="theme") Theme: 
+              select(id="theme", name="theme")
+                if(!user_preferences.theme || user_preferences.theme == '')
+                  option(value="", selected="selected") White
+                  option(value="dark") Dark
+                if(user_preferences.theme === 'dark')
+                  option(value="") White
+                  option(value="dark", selected="selected") Dark
+          .setting
+            label(for="flairs") Show flairs: 
+              if(!user_preferences.flairs || user_preferences.flairs == 'true')
+                input(type="checkbox", name="flairs", id="flairs", checked="checked")
+              else
+                input(type="checkbox", name="flairs", id="flairs")
+          .setting
+            label(for="nsfw_enabled") Show NSFW content: 
+              if (instance_config.nsfw_enabled === false && user_preferences.nsfw_enabled != 'true') || user_preferences.nsfw_enabled === 'false'
+                input(type="checkbox", name="nsfw_enabled", id="nsfw_enabled")
+              else
+                input(type="checkbox", name="nsfw_enabled", id="nsfw_enabled", checked="checked")
+          small(class="notice") Preferences are stored client-side using cookies without any personal information.
+          input(type="submit", value="Save preferences")
+          a(href="/resetprefs", class="btn") Reset preferences
+    include includes/footer.pug

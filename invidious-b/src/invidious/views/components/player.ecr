@@ -1,0 +1,49 @@
+<video style="outline:none;width:100%;background-color:#000" playsinline poster="<%= thumbnail %>"
+    id="player" class="on-video_player video-js player-style-<%= params.player_style %>"
+    <% if params.autoplay %>autoplay<% end %>
+    <% if params.video_loop %>loop<% end %>
+    <% if params.controls %>controls<% end %>>
+    <% if (hlsvp = video.hls_manifest_url) && !CONFIG.disabled?("livestreams") %>
+        <source src="<%= URI.parse(hlsvp).full_path %><% if params.local %>?local=true<% end %>" type="application/x-mpegURL" label="livestream">
+    <% else %>
+        <% if params.listen %>
+            <% audio_streams.each_with_index do |fmt, i| %>
+                <source src="/latest_version?id=<%= video.id %>&itag=<%= fmt["itag"] %><% if params.local %>&local=true<% end %>" type='<%= fmt["mimeType"] %>' label="<%= fmt["bitrate"] %>k" selected="<%= i == 0 ? true : false %>">
+            <% end %>
+          <% else %>
+            <% if params.quality == "dash" %>
+                <source src="/api/manifest/dash/id/<%= video.id %>?local=true&unique_res=1" type='application/dash+xml' label="dash">
+            <% end %>
+
+            <% fmt_stream.each_with_index do |fmt, i| %>
+                <% if params.quality %>
+                    <source src="/latest_version?id=<%= video.id %>&itag=<%= fmt["itag"] %><% if params.local %>&local=true<% end %>" type='<%= fmt["mimeType"] %>' label="<%= fmt["quality"] %>" selected="<%= params.quality == fmt["quality"] %>">
+                <% else %>
+                    <source src="/latest_version?id=<%= video.id %>&itag=<%= fmt["itag"] %><% if params.local %>&local=true<% end %>" type='<%= fmt["mimeType"] %>' label="<%= fmt["quality"] %>" selected="<%= i == 0 ? true : false %>">
+                <% end %>
+            <% end %>
+        <% end %>
+
+        <% preferred_captions.each_with_index do |caption, i| %>
+            <track kind="captions" src="/api/v1/captions/<%= video.id %>?label=<%= caption.name.simpleText %>&hl=<%= env.get("preferences").as(Preferences).locale %>"
+                label="<%= caption.name.simpleText %>" <% if i == 0 %>default<% end %>>
+        <% end %>
+
+        <% captions.each do |caption| %>
+            <track kind="captions" src="/api/v1/captions/<%= video.id %>?label=<%= caption.name.simpleText %>&hl=<%= env.get("preferences").as(Preferences).locale %>"
+                label="<%= caption.name.simpleText %>">
+        <% end %>
+    <% end %>
+</video>
+
+<script id="player_data" type="application/json">
+<%=
+{
+    "aspect_ratio" => aspect_ratio,
+    "title" => video.title,
+    "description" => HTML.escape(video.short_description),
+    "thumbnail" => thumbnail
+}.to_pretty_json
+%>
+</script>
+<script src="/js/player.js?v=<%= ASSET_COMMIT %>"></script>

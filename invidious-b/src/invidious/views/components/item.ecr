@@ -1,0 +1,164 @@
+<div class="pure-u-1 pure-u-md-1-4">
+    <div class="h-box">
+        <% case item when %>
+        <% when SearchChannel %>
+            <a style="width:100%" href="/channel/<%= item.ucid %>">
+                <% if !env.get("preferences").as(Preferences).thin_mode %>
+                    <center>
+                        <img style="width:56.25%" src="/ggpht<%= URI.parse(item.author_thumbnail).full_path %>"/>
+                    </center>
+                <% end %>
+                <p><%= item.author %></p>
+            </a>
+            <p><%= translate(locale, "`x` subscribers", number_with_separator(item.subscriber_count)) %></p>
+            <% if !item.auto_generated %><p><%= translate(locale, "`x` videos", number_with_separator(item.video_count)) %></p><% end %>
+            <h5><%= item.description_html %></h5>
+        <% when SearchPlaylist, InvidiousPlaylist %>
+            <% if item.id.starts_with? "RD" %>
+                <% url = "/mix?list=#{item.id}&continuation=#{URI.parse(item.thumbnail || "/vi/-----------").full_path.split("/")[2]}" %>
+            <% else %>
+                <% url = "/playlist?list=#{item.id}" %>
+            <% end %>
+
+            <a style="width:100%" href="<%= url %>">
+                <% if !env.get("preferences").as(Preferences).thin_mode %>
+                    <div class="thumbnail">
+                        <img class="thumbnail" src="<%= URI.parse(item.thumbnail || "/").full_path %>"/>
+                        <p class="length"><%= number_with_separator(item.video_count) %> videos</p>
+                    </div>
+                <% end %>
+                <p><%= item.title %></p>
+            </a>
+            <p>
+                <b>
+                    <a style="width:100%" href="/channel/<%= item.ucid %>"><%= item.author %></a>
+                </b>
+            </p>
+        <% when MixVideo %>
+            <a style="width:100%" href="/watch?v=<%= item.id %>&list=<%= item.rdid %>">
+                <% if !env.get("preferences").as(Preferences).thin_mode %>
+                    <div class="thumbnail">
+                        <img class="thumbnail" src="/vi/<%= item.id %>/mqdefault.jpg"/>
+                        <% if item.length_seconds != 0 %>
+                            <p class="length"><%= recode_length_seconds(item.length_seconds) %></p>
+                        <% end %>
+                    </div>
+                <% end %>
+                <p><%= HTML.escape(item.title) %></p>
+            </a>
+            <p>
+                <b>
+                    <a style="width:100%" href="/channel/<%= item.ucid %>"><%= item.author %></a>
+                </b>
+            </p>
+        <% when PlaylistVideo %>
+            <a style="width:100%" href="/watch?v=<%= item.id %>&list=<%= item.plid %>">
+                <% if !env.get("preferences").as(Preferences).thin_mode %>
+                    <div class="thumbnail">
+                        <img class="thumbnail" src="/vi/<%= item.id %>/mqdefault.jpg"/>
+                        <% if plid = env.get?("remove_playlist_items") %>
+                            <form data-onsubmit="return_false" action="/playlist_ajax?action_remove_video=1&set_video_id=<%= item.index %>&playlist_id=<%= plid %>&referer=<%= env.get("current_page") %>" method="post">
+                                <input type="hidden" name="csrf_token" value="<%= URI.encode_www_form(env.get?("csrf_token").try &.as(String) || "") %>">
+                                <p class="watched">
+                                    <a data-onclick="remove_playlist_item" data-index="<%= item.index %>" data-plid="<%= plid %>" href="javascript:void(0)">
+                                        <button type="submit" style="all:unset">
+                                            <i class="icon ion-md-trash"></i>
+                                        </button>
+                                    </a>
+                                </p>
+                            </form>
+                        <% end %>
+
+                        <% if item.responds_to?(:live_now) && item.live_now %>
+                            <p class="length"><i class="icon ion-ios-play-circle"></i> <%= translate(locale, "LIVE") %></p>
+                        <% elsif item.length_seconds != 0 %>
+                            <p class="length"><%= recode_length_seconds(item.length_seconds) %></p>
+                        <% end %>
+                    </div>
+                <% end %>
+                <p><a href="/watch?v=<%= item.id %>"><%= HTML.escape(item.title) %></a></p>
+            </a>
+            <p>
+                <b>
+                    <a style="width:100%" href="/channel/<%= item.ucid %>"><%= item.author %></a>
+                </b>
+            </p>
+
+            <h5 class="pure-g">
+                <% if item.responds_to?(:premiere_timestamp) && item.premiere_timestamp.try &.> Time.utc %>
+                    <div class="pure-u-2-3"><%= translate(locale, "Premieres in `x`", recode_date((item.premiere_timestamp.as(Time) - Time.utc).ago, locale)) %></div>
+                <% elsif Time.utc - item.published > 1.minute %>
+                    <div class="pure-u-2-3"><%= translate(locale, "Shared `x` ago", recode_date(item.published, locale)) %></div>
+                <% else %>
+                    <div class="pure-u-2-3"></div>
+                <% end %>
+
+                <div class="pure-u-1-3" style="text-align:right">
+                    <%= item.responds_to?(:views) && item.views ? translate(locale, "`x` views", number_to_short_text(item.views || 0)) : "" %>
+                </div>
+            </h5>
+        <% else %>
+            <% if !env.get("preferences").as(Preferences).thin_mode %>
+                <a style="width:100%" href="/watch?v=<%= item.id %>">
+                    <div class="thumbnail">
+                        <img class="thumbnail" src="/vi/<%= item.id %>/mqdefault.jpg"/>
+                        <% if env.get? "show_watched" %>
+                            <form data-onsubmit="return_false" action="/watch_ajax?action_mark_watched=1&id=<%= item.id %>&referer=<%= env.get("current_page") %>" method="post">
+                                <input type="hidden" name="csrf_token" value="<%= URI.encode_www_form(env.get?("csrf_token").try &.as(String) || "") %>">
+                                <p class="watched">
+                                    <a data-onclick="mark_watched" data-id="<%= item.id %>" href="javascript:void(0)">
+                                        <button type="submit" style="all:unset">
+                                            <i data-mouse="switch_classes" data-switch-classes="ion-ios-eye-off,ion-ios-eye"
+                                                class="icon ion-ios-eye">
+                                            </i>
+                                        </button>
+                                    </a>
+                                </p>
+                            </form>
+                        <% elsif plid = env.get? "add_playlist_items" %>
+                            <form data-onsubmit="return_false" action="/playlist_ajax?action_add_video=1&video_id=<%= item.id %>&playlist_id=<%= plid %>&referer=<%= env.get("current_page") %>" method="post">
+                                <input type="hidden" name="csrf_token" value="<%= URI.encode_www_form(env.get?("csrf_token").try &.as(String) || "") %>">
+                                <p class="watched">
+                                    <a data-onclick="add_playlist_item" data-id="<%= item.id %>" data-plid="<%= plid %>" href="javascript:void(0)">
+                                        <button type="submit" style="all:unset">
+                                            <i class="icon ion-md-add"></i>
+                                        </button>
+                                    </a>
+                                </p>
+                            </form>
+                        <% end %>
+
+                        <% if item.responds_to?(:live_now) && item.live_now %>
+                            <p class="length"><i class="icon ion-ios-play-circle"></i> <%= translate(locale, "LIVE") %></p>
+                        <% elsif item.length_seconds != 0 %>
+                            <p class="length"><%= recode_length_seconds(item.length_seconds) %></p>
+                        <% end %>
+                    </div>
+                </a>
+            <% end %>
+            <p><a href="/watch?v=<%= item.id %>"><%= HTML.escape(item.title) %></a></p>
+            <p style="display: flex;">
+                <b style="flex: 1;">
+                    <a style="width:100%" href="/channel/<%= item.ucid %>"><%= item.author %></a>
+                </b>
+                <a title="Audio mode" href="/watch?v=<%= item.id %>&amp;listen=1">
+                    <i class="icon ion-md-headset"></i>
+                </a>
+            </p>
+
+            <h5 class="pure-g">
+                <% if item.responds_to?(:premiere_timestamp) && item.premiere_timestamp.try &.> Time.utc %>
+                    <div class="pure-u-2-3"><%= translate(locale, "Premieres in `x`", recode_date((item.premiere_timestamp.as(Time) - Time.utc).ago, locale)) %></div>
+                <% elsif Time.utc - item.published > 1.minute %>
+                    <div class="pure-u-2-3"><%= translate(locale, "Shared `x` ago", recode_date(item.published, locale)) %></div>
+                <% else %>
+                    <div class="pure-u-2-3"></div>
+                <% end %>
+
+                <div class="pure-u-1-3" style="text-align:right">
+                    <%= item.responds_to?(:views) && item.views ? translate(locale, "`x` views", number_to_short_text(item.views || 0)) : "" %>
+                </div>
+            </h5>
+        <% end %>
+    </div>
+</div>

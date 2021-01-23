@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:6.0.9-alpine3.12
+    command: redis-server
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    ports:
+      - "6379:6379"
+    networks:
+      - teddit_net
+  web:
+    build: .
+    environment:
+      - REDIS_HOST=redis
+      - VIRTUAL_HOST=/invidious
+    ports:
+      - 8081:8080
+    networks:
+      - teddit_net
+    depends_on:
+      - redis
+networks:
+  teddit_net:
+
+networks:
+  net:
+      external: true
