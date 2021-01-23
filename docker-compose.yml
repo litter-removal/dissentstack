@@ -1,0 +1,186 @@
+version: "3.7"
+
+services:
+
+    reverse-proxy:
+        image: "jwilder/nginx-proxy:latest"
+        container_name: "reverse-proxy"
+        volumes:
+            - "html:/usr/share/nginx/html"
+            - "dhparam:/etc/nginx/dhparam"
+            - "vhost:/etc/nginx/vhost.d"
+            - "certs:/etc/nginx/certs"
+            - "/run/docker.sock:/tmp/docker.sock:ro"
+        restart: "always"
+        networks: 
+            - "net"
+        ports:
+            - "80:80"
+            - "443:443"
+    letsencrypt:
+        image: "jrcs/letsencrypt-nginx-proxy-companion:latest"
+        container_name: "letsencrypt-helper"
+        volumes:
+            - "html:/usr/share/nginx/html"
+            - "dhparam:/etc/nginx/dhparam"
+            - "vhost:/etc/nginx/vhost.d"
+            - "certs:/etc/nginx/certs"
+            - "/run/docker.sock:/var/run/docker.sock:ro"
+        environment:
+            NGINX_PROXY_CONTAINER: "reverse-proxy"
+            DEFAULT_EMAIL: "user@domain.com"
+        restart: "always"
+        depends_on:
+            - "reverse-proxy"
+        networks: 
+            - "net"
+    
+    redis:
+        image: redis:6.0.9-alpine3.12
+        command: redis-server
+        environment:
+            - REDIS_REPLICATION_MODE=master
+        ports:
+            - "6379:6379"
+        networks:
+            - net
+    web:
+        build: teddit/
+        environment:
+            - REDIS_HOST=redis
+            - VIRTUAL_HOST=teddit.dissent.com
+        ports:
+            - 8081:8080
+        networks:
+            - net
+        depends_on:
+            - redis
+
+    freshrss-db:
+        image: postgres:12-alpine
+        container_name: freshrss-db
+        hostname: freshrss-db
+        restart: unless-stopped
+        volumes:
+            - db:/var/lib/postgresql/data
+        environment:
+            POSTGRES_USER: freshrss
+            POSTGRES_PASSWORD: freshrss
+            POSTGRES_DB: freshrss
+        networks:
+            net:
+    
+    freshrss-app:
+        image: freshrss/freshrss:latest
+        container_name: freshrss-app
+        hostname: freshrss-app
+        restart: unless-stopped
+        ports:
+            - "8080:80"
+        depends_on:
+            - freshrss-db
+        volumes:
+            - data:/var/www/FreshRSS/data
+            - extensions:/var/www/FreshRSS/extensions
+        environment:
+            CRON_MIN: '*/20'
+            TZ: Europe/Paris
+            VIRTUAL_HOST: freshrss.dissent.com
+        networks:
+            net:
+
+    bibliogram:
+        build: bibliogram/
+        image: cloudrac3r/bibliogram
+        volumes:
+            - db:/app/db
+        ports:
+            - 10407:10407
+        restart: unless-stopped
+        networks: 
+            - "net"
+        environment:
+            VIRTUAL_HOST: bibliogram.dissent.com
+    postgres:
+        image: postgres:10
+        restart: unless-stopped
+        networks:
+            net:
+        volumes:
+            - postgresdata:/var/lib/postgresql/data
+            - ./config/sql:/config/sql
+            - ./docker/init-invidious-db.sh:/docker-entrypoint-initdb.d/init-invidious-db.sh
+        environment:
+            POSTGRES_DB: invidious
+            POSTGRES_PASSWORD: kemal
+            POSTGRES_USER: kemal
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "postgres"]
+
+    invidious:
+        build:
+            context: invidious/
+            dockerfile: docker/Dockerfile
+        restart: unless-stopped
+        networks:
+            net:
+        ports:
+            - "0.0.0.0:3000:3000"
+        environment:
+            # Adapted from ./config/config.yml
+          VIRTUAL_HOST: "invidious.dissent.com"
+          INVIDIOUS_CONFIG: |
+            channel_threads: 1
+            check_tables: true
+            feed_threads: 1
+            db:
+                user: kemal
+                password: kemal
+                host: postgres
+                port: 5432
+                dbname: invidious
+            full_refresh: false
+            https_only: false
+            domain:
+        depends_on:
+            - postgres
+
+    redis-alpine:
+        image: redis:6-alpine
+        restart: unless-stopped
+        volumes:
+            - redis-data:/var/lib/redis
+        networks:
+            - net
+
+    nitter:
+        build:
+            context: nitter/
+            dockerfile: Dockerfile
+        volumes:
+            - ./nitter/nitter.conf:/src/nitter.conf
+        environment:
+            VIRTUAL_HOST: nitter.dissent.com
+            VIRTUAL_PORT: 8082
+        ports:
+            - 8082:8082
+        networks:
+            - net
+        depends_on:
+            - redis-alpine
+
+    
+volumes:
+  certs:
+  html:
+  vhost:
+  dhparam:
+  db: 
+  data: 
+  extensions:
+  postgresdata:
+  redis-data:
+
+networks:
+  net:
+    external: true
