@@ -118,9 +118,7 @@ services:
             test: ["CMD", "pg_isready", "-U", "postgres"]
 
     invidious:
-        build:
-            context: invidious/
-            dockerfile: docker/Dockerfile
+        image: omarroth/invidious
         restart: unless-stopped
         networks:
             net:
