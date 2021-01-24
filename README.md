@@ -1,4 +1,4 @@
-Dissentstack provides clean, private, algorithm/influence-proof services that help the user defend their brain from social media drive insanity:
+Dissentstack provides clean, private, algorithm/influence-proof services that help the user defend their brain from social media driven insanity:
 
 ![The proxy interfaces are clean and simple, a quality most of the sites themselves have lost.](https://files.catbox.moe/21vf9w.png)
 
