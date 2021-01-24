@@ -90,7 +90,6 @@ services:
             net:
 
     bibliogram:
-        build: bibliogram/
         image: cloudrac3r/bibliogram
         volumes:
             - db:/app/db
@@ -101,6 +100,7 @@ services:
             - "net"
         environment:
             VIRTUAL_HOST: bibliogram.dissent.com
+
     postgres:
         image: postgres:10
         restart: unless-stopped
