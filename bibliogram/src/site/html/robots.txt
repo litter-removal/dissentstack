@@ -1,5 +1,0 @@
-User-Agent: *
-Disallow: /u/
-Disallow: /p/
-Disallow: /fragment/
-Disallow: /api/
