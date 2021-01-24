@@ -1,3 +1,7 @@
+Dissentstack provides clean, private, algorithm/influence-proof services that help the user defend their brain from social media drive insanity:
+
+![The proxy interfaces are clean and simple, a quality most of the sites themselves have lost.](https://files.catbox.moe/21vf9w.png)
+
 If you want to use freshrss, the database url is "freshrss-db", username freshrss password freshrss database freshrss
 
 First: special thanks to all of the creators that made these applications, I am but a humble docker merchant.
