@@ -3,8 +3,6 @@ services:
   postgres:
     image: postgres:10
     restart: unless-stopped
-    networks:
-      net:
     volumes:
       - postgresdata:/var/lib/postgresql/data
       - ./config/sql:/config/sql
@@ -20,15 +18,9 @@ services:
       context: .
       dockerfile: docker/Dockerfile
     restart: unless-stopped
-    networks:
-      net:
     ports:
-      - "0.0.0.0:3000:3000"
-    hostname: 'invidious'
-    domainname: 'invidious.local'
+      - "127.0.0.1:3000:3000"
     environment:
-      VIRTUAL_HOST: 'invidious'
-      VIRTUAL_PORT: 3000
       # Adapted from ./config/config.yml
       INVIDIOUS_CONFIG: |
         channel_threads: 1
@@ -48,6 +40,3 @@ services:
 
 volumes:
   postgresdata:
-
-networks:
-  net:
