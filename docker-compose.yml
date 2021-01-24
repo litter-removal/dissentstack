@@ -12,8 +12,16 @@ services:
             - "certs:/etc/nginx/certs"
             - "/run/docker.sock:/tmp/docker.sock:ro"
         restart: "always"
-        networks: 
-            - "net"
+        networks:
+            net:
+                aliases:
+                    - nitter.dissent.com
+                    - bibliogram.dissent.com
+                    - teddit.dissent.com
+                    - freshrss.dissent.com
+                    - invidious.dissent.com
+                    - searx.dissent.com
+
         ports:
             - "80:80"
             - "443:443"
@@ -84,7 +92,6 @@ services:
             - extensions:/var/www/FreshRSS/extensions
         environment:
             CRON_MIN: '*/20'
-            TZ: Europe/Paris
             VIRTUAL_HOST: freshrss.dissent.com
         networks:
             net:
@@ -157,6 +164,7 @@ services:
             dockerfile: Dockerfile
         volumes:
             - ./nitter/nitter.conf:/src/nitter.conf
+        hostname: nitter.dissent.com
         environment:
             VIRTUAL_HOST: nitter.dissent.com
             VIRTUAL_PORT: 8082
