@@ -15,7 +15,12 @@ Then add the following entries to your system's hosts file, pointed at 127.0.0.1
 
 Then, pull the repository via github (git clone github.com/litter-removal/dissentstack.git) or by downloading and unpacking the repository.
 
-In CMD, Powershell, Bash, or whichever commandline your system uses enter the directory of the downloaded/unzipped repository and run docker-compose up -d
+
+In CMD, Powershell, Bash, or whichever commandline your system uses enter the directory of the downloaded/unzipped repository
+
+enter the command docker network create "net"
+
+enter the command docker-compose up -d
 
 The build will take some time as DissentStack uses ~11 docker containers to run, but, once the build is complete the URLs will take you to your own locally hosted proxy services, no more relying on overloaded/blocked proxy services.
 
