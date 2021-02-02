@@ -176,9 +176,7 @@ services:
             - redis-alpine
 
     searx:
-        build:
-            context: Searx/
-            dockerfile: Dockerfile
+        image: searx/searx
         environment:
             VIRTUAL_HOST: searx.dissent.com
         ports:
