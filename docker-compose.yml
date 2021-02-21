@@ -6,6 +6,7 @@ services:
         image: "jwilder/nginx-proxy:latest"
         container_name: "reverse-proxy"
         volumes:
+            - "conf:/etc/nginx/conf.d"
             - "html:/usr/share/nginx/html"
             - "dhparam:/etc/nginx/dhparam"
             - "vhost:/etc/nginx/vhost.d"
@@ -15,16 +16,22 @@ services:
         networks:
             net:
                 aliases:
-                    - nitter.dissent.com
-                    - bibliogram.dissent.com
-                    - teddit.dissent.com
-                    - freshrss.dissent.com
-                    - invidious.dissent.com
-                    - searx.dissent.com
+                    - ${DOMAINNAME}
+                    - nitter.${DOMAINNAME}
+                    - bibliogram.${DOMAINNAME}
+                    - teddit.${DOMAINNAME}
+                    - freshrss.${DOMAINNAME}
+                    - invidious.${DOMAINNAME}
+                    - searx.${DOMAINNAME}
+                    - pihole.${DOMAINNAME}
+                    - agendav.${DOMAINNAME}
+        environment:
+          DEFAULT_HOST: pihole.${DOMAINNAME}
 
         ports:
             - "80:80"
-            - "443:443"
+            #- "443:443"
+            #- "53:53"
     letsencrypt:
         image: "jrcs/letsencrypt-nginx-proxy-companion:latest"
         container_name: "letsencrypt-helper"
@@ -34,14 +41,60 @@ services:
             - "vhost:/etc/nginx/vhost.d"
             - "certs:/etc/nginx/certs"
             - "/run/docker.sock:/var/run/docker.sock:ro"
+            - "acme:/etc/acme.sh"
         environment:
             NGINX_PROXY_CONTAINER: "reverse-proxy"
             DEFAULT_EMAIL: "user@domain.com"
         restart: "always"
         depends_on:
             - "reverse-proxy"
+            - "pihole"
+            - "invidious"
+            - "bibliogram"
+            - "teddit"
+            - "nitter"
+            - "freshrss-app"
         networks: 
             - "net"
+        dns: ${IPADDR}
+
+    pihole:
+        image: pihole/pihole:latest
+        ports:
+            - '${IPADDR}:53:53/tcp'
+            - '${IPADDR}:53:53/udp'
+            - '8053:80/tcp'
+            - "4430:443/tcp"
+        volumes:
+            - './etc-pihole/:/etc/pihole/:z'
+            - './etc-dnsmasq.d/:/etc/dnsmasq.d/:z'
+        # run `touch ./var-log/pihole.log` first unless you like errors
+        # - './var-log/pihole.log:/var/log/pihole.log'
+        # Recommended but not required (DHCP needs NET_ADMIN)
+        #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+        cap_add:
+            - NET_ADMIN
+        environment:
+            PROXY_LOCATION: pihole
+            VIRTUAL_HOST: pihole.${DOMAINNAME}
+            LETSENCRYPT_HOST: pihole.${DOMAINNAME}
+            VIRTUAL_PORT: 80
+              # LAN hostnames for other docker containers using jwilder
+        extra_hosts:
+            - 'nitter nitter.${DOMAINNAME}:${IPADDR}'
+            - 'bibliogram bibliogram.${DOMAINNAME}:${IPADDR}'
+            - 'teddit teddit.${DOMAINNAME}:${IPADDR}'
+            - 'freshrss freshrss.${DOMAINNAME}:${IPADDR}'
+            - 'invidious invidious.${DOMAINNAME}:${IPADDR}'
+            - 'searx searx.${DOMAINNAME}:${IPADDR}'
+            - 'pihole pihole.${DOMAINNAME}:${IPADDR}'
+            - 'agendav agendav.${DOMAINNAME}:${IPADDR}'
+            - 'default ${DOMAINNAME}:${IPADDR}'
+        restart: always
+        networks:
+            - 'net'
+
+
     
     redis:
         image: redis:6.0.9-alpine3.12
@@ -52,17 +105,21 @@ services:
             - "6379:6379"
         networks:
             - net
+        depends_on:
+            - 'pihole'
     teddit:
         build: teddit/
         environment:
             - REDIS_HOST=redis
-            - VIRTUAL_HOST=teddit.dissent.com
+            - VIRTUAL_HOST=teddit.${DOMAINNAME}
+            - LETSENCRYPT_HOST=teddit.${DOMAINNAME}
         ports:
             - 8081:8080
         networks:
             - net
         depends_on:
             - redis
+            - 'pihole'
 
     freshrss-db:
         image: postgres:12-alpine
@@ -92,9 +149,12 @@ services:
             - extensions:/var/www/FreshRSS/extensions
         environment:
             CRON_MIN: '*/20'
-            VIRTUAL_HOST: freshrss.dissent.com
+            VIRTUAL_HOST: freshrss.${DOMAINNAME}
+            LETSENCRYPT_HOST: freshrss.${DOMAINNAME}
         networks:
             net:
+        depends_on:
+            - 'pihole'
 
     bibliogram:
         image: cloudrac3r/bibliogram
@@ -106,7 +166,10 @@ services:
         networks: 
             - "net"
         environment:
-            VIRTUAL_HOST: bibliogram.dissent.com
+            VIRTUAL_HOST: bibliogram.${DOMAINNAME}
+            LETSENCRYPT_HOST: bibliogram.${DOMAINNAME}
+        depends_on:
+            - 'pihole'
 
     postgres:
         image: postgres:10
@@ -123,6 +186,8 @@ services:
             POSTGRES_USER: kemal
         healthcheck:
             test: ["CMD", "pg_isready", "-U", "postgres"]
+        depends_on:
+            - 'pihole'
 
     invidious:
         image: omarroth/invidious
@@ -133,7 +198,8 @@ services:
             - "0.0.0.0:3000:3000"
         environment:
             # Adapted from ./config/config.yml
-          VIRTUAL_HOST: "invidious.dissent.com"
+          VIRTUAL_HOST: "invidious.${DOMAINNAME}"
+          LETSENCRYPT_HOST: "invidious.${DOMAINNAME}"
           INVIDIOUS_CONFIG: |
             channel_threads: 1
             check_tables: true
@@ -149,6 +215,7 @@ services:
             domain:
         depends_on:
             - postgres
+            - 'pihole'
 
     redis-alpine:
         image: redis:6-alpine
@@ -164,9 +231,10 @@ services:
             dockerfile: Dockerfile
         volumes:
             - ./nitter/nitter.conf:/src/nitter.conf
-        hostname: nitter.dissent.com
+        hostname: nitter.${DOMAINNAME}
         environment:
-            VIRTUAL_HOST: nitter.dissent.com
+            VIRTUAL_HOST: nitter.${DOMAINNAME}
+            LETSENCRYPT_HOST: nitter.${DOMAINNAME}
             VIRTUAL_PORT: 8082
         ports:
             - 8082:8082
@@ -174,15 +242,19 @@ services:
             - net
         depends_on:
             - redis-alpine
+            - 'pihole'
 
     searx:
         image: searx/searx
         environment:
-            VIRTUAL_HOST: searx.dissent.com
+            VIRTUAL_HOST: searx.${DOMAINNAME}
+            LETSENCRYPT_HOST: searx.${DOMAINNAME}
         ports:
             - 8083:8080
         networks:
             - net
+        depends_on:
+            - 'pihole'
 
     
 volumes:
@@ -195,6 +267,8 @@ volumes:
   extensions:
   postgresdata:
   redis-data:
+  acme:
+  conf:
 
 networks:
   net:
