@@ -10,6 +10,8 @@ I chose differently. I chose, dissent.
 
 Dissentstack provides clean, private, algorithm/influence-proof services that help the user defend their brain from social media driven insanity. It also includes a pihole instance to keep telemetry servers from monitoring your activity online.
 
+When the FreshRSS installation included in the stack is used correctly, the user can follow their friends, favorite artists, pundits, and entertainers, only receiving updates on their activity and keeping themselves away from advertising and influence campaigns... Perhaps, even from endless scroll sessions.
+
 
 Good news! No more nasty hosts file edits!
 
