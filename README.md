@@ -21,6 +21,8 @@ export DOMAINNAME={example.com, the domain suffix that you will access services 
 
 enter the command docker-compose up -d
 
+While the services are building, set the DNS server of any machine that will use dissenstack to the IP address of the machine running dissenstack (this includes the machine itself for local hosting, 127.0.0.1 will not work due to some complexity with DNS port assignments on redhat systems)
+
 The build will take some time as DissentStack uses ~11 docker containers to run, but, once the build is complete the URLs will take you to your own locally hosted proxy services, no more relying on overloaded/blocked proxy services.
 
 Services will be availabe at:
