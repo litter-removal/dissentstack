@@ -1,8 +1,20 @@
+Is a man not entitled to the sanctity of his mind?
+
+No! Says that man in Silicon Valley. It belongs to The Algorithm!
+
+No! Says the man in the capitol, It belongs to me!
+
+No! Says the man behind the news desk, It belongs to our sponsors!
+
+I chose differently. I chose, dissent.
+
+Dissentstack provides clean, private, algorithm/influence-proof services that help the user defend their brain from social media driven insanity. It also includes a pihole instance to keep telemetry servers from monitoring your activity online.
+
+
 Good news! No more nasty hosts file edits!
 
 The latest version includes two major changes: The introdution of variables in the docker-compose file, and a pihole container that will configure itself with your chosen IP address and Domain Name (this also means no more cringeworthy DISSENT DOT COM hostnames. Makes branding a lot easier.)
 
-Dissentstack provides clean, private, algorithm/influence-proof services that help the user defend their brain from social media driven insanity:
 
 ![The proxy interfaces are clean and simple, a quality most of the sites themselves have lost.](https://files.catbox.moe/21vf9w.png)
 
