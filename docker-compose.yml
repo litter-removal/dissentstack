@@ -72,13 +72,8 @@ services:
         # - './var-log/pihole.log:/var/log/pihole.log'
         # Recommended but not required (DHCP needs NET_ADMIN)
         #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
-        cap_add:
-            - NET_ADMIN
         environment:
-            PROXY_LOCATION: pihole
             VIRTUAL_HOST: pihole.${DOMAINNAME}
-            LETSENCRYPT_HOST: pihole.${DOMAINNAME}
-            VIRTUAL_PORT: 80
               # LAN hostnames for other docker containers using jwilder
         extra_hosts:
             - 'nitter nitter.${DOMAINNAME}:${IPADDR}'
@@ -255,6 +250,54 @@ services:
             - net
         depends_on:
             - 'pihole'
+
+    restyaboard:
+     image: restyaplatform/restyaboard:dev
+     ports:
+       - 1234:80
+     volumes:
+       - /var/opt/restya/media:/var/lib/nginx/html/media
+     environment:
+       - POSTGRES_HOST=restpostgres
+       - POSTGRES_PORT=5432
+       - POSTGRES_ADMIN_USER=postgres
+       - POSTGRES_ADMIN_PASS=admin
+       - RESTYA_DB_USERNAME=restya
+       - RESTYA_DB_USERPASS=restya
+       - VIRTUAL_HOST=restya.${DOMAINNAME}
+       - LETSENCRYPT_HOST=restya.${DOMAINNAME}
+       - VIRTUAL_PORT=1234
+      #- RESTYA_DB=restyaboard
+      #- SMTP_SERVER=smtp_relay
+      #- SMTP_PORT=587
+      #- TZ=Etc/UTC
+     depends_on:
+       - restpostgres
+       - pihole
+     restart: always
+     networks:
+       - net
+
+  # See https://hub.docker.com/r/boky/postfix for documentation
+  # or try https://github.com/WeAreGenki/docker-smtp
+    smtp_relay:
+      image: boky/postfix
+      environment:
+        - RELAYHOST=127.0.0.1:1587
+        - ALLOW_EMPTY_SENDER_DOMAINS=true
+      networks:
+        - net
+
+    restpostgres:
+     image: postgres:12-alpine
+     volumes:
+       - /var/opt/restya/data:/var/lib/postgresql/data
+     environment:
+       - POSTGRES_USER=postgres
+       - POSTGRES_PASSWORD=admin
+     restart: always
+     networks:
+       - net
 
     
 volumes:
