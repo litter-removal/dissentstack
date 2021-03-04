@@ -17,6 +17,8 @@ When the FreshRSS installation included in the stack is used correctly, the user
 
 Good news! No more nasty hosts file edits!
 
+Good news(2)! Restyaboard has been added to dissentstack, privately track your own tasks and sync to your calendar with ical files.
+
 The latest version includes two major changes: The introdution of variables in the docker-compose file, and a pihole container that will configure itself with your chosen IP address and Domain Name (this also means no more cringeworthy DISSENT DOT COM hostnames. Makes branding a lot easier.)
 
 
