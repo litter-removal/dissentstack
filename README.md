@@ -33,11 +33,11 @@ In CMD, Powershell, Bash, or whichever commandline your system uses enter the di
 
 enter the command docker network create "net"
 
-export IPADDR={your IP address, that you will access the system on}
+-- no more manually running commands! --
 
-export DOMAINNAME={example.com, the domain suffix that you will access services on}
+Open up bash and navigate to the dissentstack directory, run . setup-update.sh, the script will prompt you for the IP address of the host machine and the desired domain name, it will also set these as environment variables for docker-compose, so that you can simply docker-compose up -d upon starting your machine to bring the envrionment back up.
 
-enter the command docker-compose up -d
+Running setup-update.sh afterwards will pull new copies of the most frequently updated services in the stack straight from github to avoid the slowness and inconsistency of docker image updates.
 
 While the services are building, set the DNS server of any machine that will use dissenstack to the IP address of the machine running dissenstack (this includes the machine itself for local hosting, 127.0.0.1 will not work due to some complexity with DNS port assignments on redhat systems)
 
@@ -51,6 +51,7 @@ bibliogram.{yourdomain}.com
 freshrss.{yourdomain}.com
 pihole.{yourdomain}.com
 teddit.{yourdomain}.com
+restyaboard.{yourdomain}.com
 
 If you want to use freshrss, the database url is "freshrss-db", username freshrss password freshrss database freshrss
 
