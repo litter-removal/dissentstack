@@ -1,8 +1,0 @@
-theme: jekyll-theme-cayman
-title: FreshRSS
-description: Documentation center
-
-logo: /img/FreshRSS-logo.png
-show_downloads: true
-
-include: contributing.md

@@ -186,7 +186,9 @@ services:
             - 'pihole'
 
     invidious:
-        image: omarroth/invidious
+        build:
+            context: ./invidious
+            dockerfile: docker/Dockerfile
         restart: unless-stopped
         networks:
             net:
